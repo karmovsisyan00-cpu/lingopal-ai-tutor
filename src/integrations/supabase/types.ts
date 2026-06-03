@@ -14,7 +14,182 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      achievements: {
+        Row: {
+          code: string
+          description: string
+          icon: string
+          id: string
+          title: string
+          unlocked_at: string
+          user_id: string
+        }
+        Insert: {
+          code: string
+          description: string
+          icon?: string
+          id?: string
+          title: string
+          unlocked_at?: string
+          user_id: string
+        }
+        Update: {
+          code?: string
+          description?: string
+          icon?: string
+          id?: string
+          title?: string
+          unlocked_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      daily_challenges: {
+        Row: {
+          challenge_date: string
+          completed: boolean
+          created_at: string
+          id: string
+          language: string
+          level: string
+          prompt: string
+          user_id: string
+          xp_reward: number
+        }
+        Insert: {
+          challenge_date?: string
+          completed?: boolean
+          created_at?: string
+          id?: string
+          language: string
+          level: string
+          prompt: string
+          user_id: string
+          xp_reward?: number
+        }
+        Update: {
+          challenge_date?: string
+          completed?: boolean
+          created_at?: string
+          id?: string
+          language?: string
+          level?: string
+          prompt?: string
+          user_id?: string
+          xp_reward?: number
+        }
+        Relationships: []
+      }
+      messages: {
+        Row: {
+          content: string
+          correction: string | null
+          created_at: string
+          explanation: string | null
+          id: string
+          role: string
+          thread_id: string
+          user_id: string
+          vocab: Json | null
+        }
+        Insert: {
+          content: string
+          correction?: string | null
+          created_at?: string
+          explanation?: string | null
+          id?: string
+          role: string
+          thread_id: string
+          user_id: string
+          vocab?: Json | null
+        }
+        Update: {
+          content?: string
+          correction?: string | null
+          created_at?: string
+          explanation?: string | null
+          id?: string
+          role?: string
+          thread_id?: string
+          user_id?: string
+          vocab?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_thread_id_fkey"
+            columns: ["thread_id"]
+            isOneToOne: false
+            referencedRelation: "threads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          display_name: string | null
+          id: string
+          last_active_date: string | null
+          level: string
+          preferred_language: string
+          streak_count: number
+          updated_at: string
+          xp: number
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string | null
+          id: string
+          last_active_date?: string | null
+          level?: string
+          preferred_language?: string
+          streak_count?: number
+          updated_at?: string
+          xp?: number
+        }
+        Update: {
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          last_active_date?: string | null
+          level?: string
+          preferred_language?: string
+          streak_count?: number
+          updated_at?: string
+          xp?: number
+        }
+        Relationships: []
+      }
+      threads: {
+        Row: {
+          created_at: string
+          id: string
+          language: string
+          level: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          language?: string
+          level?: string
+          title?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          language?: string
+          level?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
