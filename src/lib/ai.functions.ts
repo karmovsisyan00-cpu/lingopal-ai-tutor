@@ -86,7 +86,7 @@ export const chatWithTutor = createServerFn({ method: "POST" })
       .select("role, content")
       .eq("thread_id", thread.id)
       .order("created_at", { ascending: false })
-      .limit(20);
+      .limit(100);
 
     const history = (recentHistory ?? []).reverse();
 
