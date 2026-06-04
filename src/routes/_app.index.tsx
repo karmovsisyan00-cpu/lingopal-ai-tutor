@@ -36,8 +36,8 @@ function HomePage() {
   const [showNew, setShowNew] = useState(false);
 
   const createMut = useMutation({
-    mutationFn: (vars: { language: string; level: Level }) =>
-      newThread({ data: { language: vars.language, level: vars.level } }),
+    mutationFn: (vars: { language: string; level: Level; native_language?: string }) =>
+      newThread({ data: vars }),
     onSuccess: (t) => {
       qc.invalidateQueries({ queryKey: ["threads"] });
       navigate({ to: "/chat/$threadId", params: { threadId: t.id } });
@@ -168,8 +168,9 @@ function HomePage() {
         <NewChatSheet
           defaultLanguage={lang}
           defaultLevel={level}
+          defaultNative={profile?.native_language ?? "English"}
           onClose={() => setShowNew(false)}
-          onCreate={(language, level) => createMut.mutate({ language, level })}
+          onCreate={(language, level, native_language) => createMut.mutate({ language, level, native_language })}
           loading={createMut.isPending}
         />
       )}
@@ -182,33 +183,36 @@ function HomePage() {
 function NewChatSheet({
   defaultLanguage,
   defaultLevel,
+  defaultNative,
   onClose,
   onCreate,
   loading,
 }: {
   defaultLanguage: string;
   defaultLevel: Level;
+  defaultNative: string;
   onClose: () => void;
-  onCreate: (lang: string, level: Level) => void;
+  onCreate: (lang: string, level: Level, native: string) => void;
   loading: boolean;
 }) {
   const [lang, setLang] = useState(defaultLanguage);
   const [level, setLevel] = useState<Level>(defaultLevel);
+  const [native, setNative] = useState(defaultNative);
 
   return (
     <div className="fixed inset-0 z-50 flex items-end" onClick={onClose}>
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
       <div
-        className="relative w-full max-w-md mx-auto bg-surface-elevated border-t border-border rounded-t-3xl p-5 pb-8 safe-bottom"
+        className="relative w-full max-w-md mx-auto bg-surface-elevated border-t border-border rounded-t-3xl p-5 pb-8 safe-bottom max-h-[90dvh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="w-10 h-1.5 bg-border rounded-full mx-auto mb-4" />
         <h3 className="text-lg font-bold mb-1">New conversation</h3>
-        <p className="text-sm text-muted-foreground mb-5">Pick a language and level to begin.</p>
+        <p className="text-sm text-muted-foreground mb-5">Pick what you want to learn and the language you'll get explanations in.</p>
 
         <div className="mb-4">
-          <label className="text-xs uppercase tracking-wider text-muted-foreground">Language</label>
-          <div className="grid grid-cols-2 gap-2 mt-2 max-h-56 overflow-y-auto scrollbar-hide">
+          <label className="text-xs uppercase tracking-wider text-muted-foreground">I want to learn</label>
+          <div className="grid grid-cols-2 gap-2 mt-2 max-h-44 overflow-y-auto scrollbar-hide">
             {LANGUAGES.map((l) => (
               <button
                 key={l.code}
@@ -216,6 +220,25 @@ function NewChatSheet({
                 className={`flex items-center gap-2 px-3 h-11 rounded-xl border text-sm transition ${
                   lang === l.code
                     ? "bg-primary/15 border-primary text-foreground"
+                    : "bg-input border-border text-muted-foreground"
+                }`}
+              >
+                <span className="text-lg">{l.flag}</span> {l.code}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="mb-4">
+          <label className="text-xs uppercase tracking-wider text-muted-foreground">Explain to me in</label>
+          <div className="grid grid-cols-2 gap-2 mt-2 max-h-44 overflow-y-auto scrollbar-hide">
+            {LANGUAGES.map((l) => (
+              <button
+                key={l.code}
+                onClick={() => setNative(l.code)}
+                className={`flex items-center gap-2 px-3 h-11 rounded-xl border text-sm transition ${
+                  native === l.code
+                    ? "bg-accent/20 border-accent text-foreground"
                     : "bg-input border-border text-muted-foreground"
                 }`}
               >
@@ -245,7 +268,7 @@ function NewChatSheet({
         </div>
 
         <button
-          onClick={() => onCreate(lang, level)}
+          onClick={() => onCreate(lang, level, native)}
           disabled={loading}
           className="w-full h-12 rounded-xl bg-gradient-primary text-primary-foreground font-semibold shadow-glow disabled:opacity-60"
         >

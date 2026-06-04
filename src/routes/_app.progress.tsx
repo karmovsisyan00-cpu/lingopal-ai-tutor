@@ -27,7 +27,7 @@ function ProgressPage() {
   const { data: achievements } = useQuery({ queryKey: ["achievements"], queryFn: () => fetchAch() });
 
   const updateMut = useMutation({
-    mutationFn: (vars: { preferred_language?: string; level?: Level }) => updateFn({ data: vars }),
+    mutationFn: (vars: { preferred_language?: string; level?: Level; native_language?: string }) => updateFn({ data: vars }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["profile"] }),
   });
 
@@ -65,7 +65,7 @@ function ProgressPage() {
         <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-3">Preferences</h2>
         <div className="rounded-2xl bg-surface border border-border p-4 space-y-4">
           <div>
-            <label className="text-xs text-muted-foreground">Language</label>
+            <label className="text-xs text-muted-foreground">I want to learn</label>
             <div className="mt-2 grid grid-cols-2 gap-2 max-h-44 overflow-y-auto scrollbar-hide">
               {LANGUAGES.map((l) => (
                 <button
@@ -74,6 +74,24 @@ function ProgressPage() {
                   className={`h-10 px-3 rounded-xl text-sm flex items-center gap-2 border transition ${
                     profile?.preferred_language === l.code
                       ? "bg-primary/15 border-primary"
+                      : "bg-input border-border text-muted-foreground"
+                  }`}
+                >
+                  <span>{l.flag}</span> {l.code}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div>
+            <label className="text-xs text-muted-foreground">Explain to me in (native language)</label>
+            <div className="mt-2 grid grid-cols-2 gap-2 max-h-44 overflow-y-auto scrollbar-hide">
+              {LANGUAGES.map((l) => (
+                <button
+                  key={l.code}
+                  onClick={() => updateMut.mutate({ native_language: l.code })}
+                  className={`h-10 px-3 rounded-xl text-sm flex items-center gap-2 border transition ${
+                    profile?.native_language === l.code
+                      ? "bg-accent/20 border-accent"
                       : "bg-input border-border text-muted-foreground"
                   }`}
                 >

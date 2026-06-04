@@ -131,6 +131,7 @@ export type Database = {
           id: string
           last_active_date: string | null
           level: string
+          native_language: string
           preferred_language: string
           streak_count: number
           updated_at: string
@@ -142,6 +143,7 @@ export type Database = {
           id: string
           last_active_date?: string | null
           level?: string
+          native_language?: string
           preferred_language?: string
           streak_count?: number
           updated_at?: string
@@ -153,6 +155,7 @@ export type Database = {
           id?: string
           last_active_date?: string | null
           level?: string
+          native_language?: string
           preferred_language?: string
           streak_count?: number
           updated_at?: string
@@ -166,6 +169,7 @@ export type Database = {
           id: string
           language: string
           level: string
+          native_language: string
           title: string
           updated_at: string
           user_id: string
@@ -175,6 +179,7 @@ export type Database = {
           id?: string
           language?: string
           level?: string
+          native_language?: string
           title?: string
           updated_at?: string
           user_id: string
@@ -184,6 +189,7 @@ export type Database = {
           id?: string
           language?: string
           level?: string
+          native_language?: string
           title?: string
           updated_at?: string
           user_id?: string
