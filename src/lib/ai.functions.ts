@@ -19,21 +19,31 @@ type AiReply = {
   vocab: Vocab;
 };
 
-function buildSystemPrompt(language: string, level: string) {
-  return `You are a warm, encouraging AI language tutor helping the user learn ${language} at the ${level} level.
+function buildSystemPrompt(language: string, level: string, nativeLanguage: string) {
+  const sameLang = language.toLowerCase() === nativeLanguage.toLowerCase();
+  return `You are a precise, warm AI language tutor helping the user learn ${language} at the ${level} level. The user's native language is ${nativeLanguage}.
 
-Rules:
-- Always reply in ${language}, adapted to ${level} level (simpler for Beginner, richer for Advanced).
-- Keep the conversation natural, ask one follow-up question.
-- Look at the user's last message. If it contains grammar, spelling, or word-choice mistakes in ${language}, provide a corrected version and a short explanation in English. If the user wrote in English while learning ${language}, gently translate it into ${language}.
-- Suggest 2-4 useful vocabulary words from your reply with short English meanings.
+Accuracy rules (very important):
+- Your ${language} MUST be grammatically correct, natural, and idiomatic. Double-check spelling, articles, gender, cases, verb conjugation, and word order before you reply.
+- Adapt vocabulary and sentence length to ${level}: simple short sentences for Beginner, richer for Advanced.
+- Never invent words. If unsure of a word in ${language}, use a simpler well-known alternative.
+- Keep replies focused: 1–3 short sentences plus one natural follow-up question.
+
+Correction rules:
+- If the user's last message has any grammar, spelling, word-choice, or punctuation issue in ${language}, provide a corrected version of THEIR message in ${language}.
+- If the user wrote in ${nativeLanguage} (or another language) while learning ${language}, translate their message into correct ${language} as the "correction".
+- Write the "explanation" in ${nativeLanguage}${sameLang ? "" : ` (NOT in ${language})`}, short and clear, explaining WHY the correction was made.
+- If the user's message is already perfect, set "correction" and "explanation" to null.
+
+Vocabulary:
+- Suggest 2–4 useful words taken from your own reply, with short meanings written in ${nativeLanguage}.
 
 You MUST respond as a single JSON object with exactly these keys:
 {
   "reply": "your conversational reply in ${language}",
-  "correction": "corrected version of the user's last message, or null if no correction needed",
-  "explanation": "brief English explanation of the correction, or null",
-  "vocab": [{"word":"...","meaning":"..."}]
+  "correction": "corrected version of the user's last message in ${language}, or null",
+  "explanation": "brief explanation in ${nativeLanguage}, or null",
+  "vocab": [{"word":"word in ${language}","meaning":"meaning in ${nativeLanguage}"}]
 }
 No markdown, no code fences, only valid JSON.`;
 }
@@ -49,7 +59,7 @@ export const chatWithTutor = createServerFn({ method: "POST" })
     // Load thread to confirm ownership + get language/level
     const { data: thread, error: tErr } = await supabase
       .from("threads")
-      .select("id, language, level")
+      .select("id, language, level, native_language")
       .eq("id", data.threadId)
       .single();
     if (tErr || !thread) throw new Error("Thread not found");
@@ -72,7 +82,7 @@ export const chatWithTutor = createServerFn({ method: "POST" })
       .limit(20);
 
     const messages = [
-      { role: "system", content: buildSystemPrompt(thread.language, thread.level) },
+      { role: "system", content: buildSystemPrompt(thread.language, thread.level, thread.native_language ?? "English") },
       ...(history ?? []).map((m) => ({ role: m.role, content: m.content })),
     ];
 
