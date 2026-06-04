@@ -18,6 +18,7 @@ export const updateProfile = createServerFn({ method: "POST" })
       .object({
         display_name: z.string().min(1).max(80).optional(),
         preferred_language: z.string().optional(),
+        native_language: z.string().optional(),
         level: z.enum(["Beginner", "Intermediate", "Advanced"]).optional(),
       })
       .parse(d),
@@ -55,11 +56,17 @@ export const createThread = createServerFn({ method: "POST" })
         title: z.string().min(1).max(120).optional(),
         language: z.string(),
         level: z.enum(["Beginner", "Intermediate", "Advanced"]),
+        native_language: z.string().optional(),
       })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
+    let nativeLang = data.native_language;
+    if (!nativeLang) {
+      const { data: prof } = await supabase.from("profiles").select("native_language").eq("id", userId).maybeSingle();
+      nativeLang = prof?.native_language ?? "English";
+    }
     const { data: out, error } = await supabase
       .from("threads")
       .insert({
@@ -67,6 +74,7 @@ export const createThread = createServerFn({ method: "POST" })
         title: data.title ?? `${data.language} chat`,
         language: data.language,
         level: data.level,
+        native_language: nativeLang,
       })
       .select()
       .single();
