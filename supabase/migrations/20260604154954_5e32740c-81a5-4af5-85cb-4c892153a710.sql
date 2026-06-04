@@ -1,0 +1,2 @@
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS native_language text NOT NULL DEFAULT 'English';
+ALTER TABLE public.threads ADD COLUMN IF NOT EXISTS native_language text NOT NULL DEFAULT 'English';
