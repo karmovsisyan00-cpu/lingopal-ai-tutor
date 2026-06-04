@@ -80,13 +80,15 @@ export const chatWithTutor = createServerFn({ method: "POST" })
     });
     if (insErr) throw new Error(insErr.message);
 
-    // Load short history (last 20)
-    const { data: history } = await supabase
+    // Load recent history, then restore chronological order for the model.
+    const { data: recentHistory } = await supabase
       .from("messages")
       .select("role, content")
       .eq("thread_id", thread.id)
-      .order("created_at", { ascending: true })
+      .order("created_at", { ascending: false })
       .limit(20);
+
+    const history = (recentHistory ?? []).reverse();
 
     const messages = [
       { role: "system", content: buildSystemPrompt(thread.language, thread.level, thread.native_language ?? "English") },
@@ -96,7 +98,7 @@ export const chatWithTutor = createServerFn({ method: "POST" })
     const res = await fetch(GATEWAY_URL, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${apiKey}`,
+        "Lovable-API-Key": apiKey,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
@@ -200,7 +202,7 @@ export const getOrCreateDailyChallenge = createServerFn({ method: "POST" })
 
     const res = await fetch(GATEWAY_URL, {
       method: "POST",
-      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+      headers: { "Lovable-API-Key": apiKey, "Content-Type": "application/json" },
       body: JSON.stringify({
         model: MODEL,
         messages: [
