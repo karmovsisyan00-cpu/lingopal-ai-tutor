@@ -85,7 +85,10 @@ export const chatWithTutor = createServerFn({ method: "POST" })
       .select("id, language, level, native_language")
       .eq("id", data.threadId)
       .single();
-    if (tErr || !thread) throw new Error("Thread not found");
+    if (tErr || !thread) {
+      if (tErr) console.error("[ai:chat.thread]", tErr);
+      throw new Error("Thread not found");
+    }
 
     // Save user message
     const { error: insErr } = await supabase.from("messages").insert({
@@ -94,7 +97,7 @@ export const chatWithTutor = createServerFn({ method: "POST" })
       role: "user",
       content: data.message,
     });
-    if (insErr) throw new Error(insErr.message);
+    if (insErr) logAndFail("chat.insertUserMessage", insErr, "Failed to save message");
 
     // Load recent history, then restore chronological order for the model.
     const { data: recentHistory } = await supabase
@@ -106,8 +109,12 @@ export const chatWithTutor = createServerFn({ method: "POST" })
 
     const history = (recentHistory ?? []).reverse();
 
+    const safeLanguage = safeLang(thread.language);
+    const safeLevelValue = safeLevel(thread.level);
+    const safeNative = safeLang(thread.native_language, "English");
+
     const messages = [
-      { role: "system", content: buildSystemPrompt(thread.language, thread.level, thread.native_language ?? "English") },
+      { role: "system", content: buildSystemPrompt(safeLanguage, safeLevelValue, safeNative) },
       ...(history ?? []).map((m) => ({ role: m.role, content: m.content })),
     ];
 
