@@ -82,7 +82,7 @@ You MUST respond as a single JSON object with exactly these keys:
   "explanation": "brief explanation in ${nativeLanguage}, or null",
   "vocab": [{"word":"word in ${language}","meaning":"meaning in ${nativeLanguage}"}]
 }
-No markdown, no code fences, only valid JSON.`;
+No markdown, no code fences, only valid JSON.${armenianRules}`;
 }
 
 export const chatWithTutor = createServerFn({ method: "POST" })
