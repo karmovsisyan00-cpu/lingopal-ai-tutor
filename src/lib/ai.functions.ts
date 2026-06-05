@@ -4,7 +4,9 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { LANGUAGES } from "@/lib/languages";
 
 const GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
-const MODEL = "openai/gpt-5.4-mini";
+// Use a stronger model for higher linguistic accuracy, especially for
+// lower-resource languages like Armenian.
+const MODEL = "openai/gpt-5.5";
 
 const LANG_CODES = LANGUAGES.map((l) => l.code) as [string, ...string[]];
 const LanguageEnum = z.enum(LANG_CODES);
@@ -37,6 +39,18 @@ type AiReply = {
 
 function buildSystemPrompt(language: string, level: string, nativeLanguage: string) {
   const sameLang = language.toLowerCase() === nativeLanguage.toLowerCase();
+  const isArmenian = language.toLowerCase() === "armenian";
+  const armenianRules = isArmenian
+    ? `
+
+Armenian-specific rules (CRITICAL):
+- Write Eastern Armenian (Արևելահայերեն) in the Armenian script (Մեսրոպյան այբուբեն). Never use Latin transliteration like "barev" — always "բարև".
+- Use correct Armenian orthography: ը, ո vs օ, ե vs է, ու as a digraph, և as a single ligature. Mind silent ը at word start.
+- Use Armenian punctuation correctly: ՝ (բութ), ՜ (շեշտ / exclamation), ՞ (հարցական) placed ON the stressed vowel of the question word, not at end of sentence. End sentences with ։ (վերջակետ), not Latin period.
+- Respect Armenian grammar: 7 cases (ուղղական, սեռական, տրական, հայցական, բացառական, գործիական, ներգոյական), definite article -ը/-ն, correct verb conjugation (եմ/ես/է/ենք/եք/են), aspect (անկատար/կատարյալ), and proper word order.
+- Use natural, modern spoken Armenian — not stilted or machine-translated phrasing. Prefer common everyday words over rare literary forms unless the level is Advanced.
+- Double-check every Armenian word you write. If unsure, choose a simpler correct word.`
+    : "";
   return `You are a precise, warm AI language tutor helping the user learn ${language} at the ${level} level. The user's native language is ${nativeLanguage}.
 
 Conversation rules (very important):
@@ -68,7 +82,7 @@ You MUST respond as a single JSON object with exactly these keys:
   "explanation": "brief explanation in ${nativeLanguage}, or null",
   "vocab": [{"word":"word in ${language}","meaning":"meaning in ${nativeLanguage}"}]
 }
-No markdown, no code fences, only valid JSON.`;
+No markdown, no code fences, only valid JSON.${armenianRules}`;
 }
 
 export const chatWithTutor = createServerFn({ method: "POST" })
