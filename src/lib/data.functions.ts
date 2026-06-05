@@ -1,13 +1,23 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { LANGUAGES } from "@/lib/languages";
+
+const LANG_CODES = LANGUAGES.map((l) => l.code) as [string, ...string[]];
+const LanguageEnum = z.enum(LANG_CODES);
+const LevelEnum = z.enum(["Beginner", "Intermediate", "Advanced"]);
+
+function logAndFail(scope: string, error: unknown, userMessage = "Database operation failed"): never {
+  console.error(`[db:${scope}]`, error);
+  throw new Error(userMessage);
+}
 
 export const getProfile = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabase, userId } = context;
     const { data, error } = await supabase.from("profiles").select("*").eq("id", userId).maybeSingle();
-    if (error) throw new Error(error.message);
+    if (error) logAndFail("getProfile", error);
     return data;
   });
 
@@ -17,9 +27,9 @@ export const updateProfile = createServerFn({ method: "POST" })
     z
       .object({
         display_name: z.string().min(1).max(80).optional(),
-        preferred_language: z.string().optional(),
-        native_language: z.string().optional(),
-        level: z.enum(["Beginner", "Intermediate", "Advanced"]).optional(),
+        preferred_language: LanguageEnum.optional(),
+        native_language: LanguageEnum.optional(),
+        level: LevelEnum.optional(),
       })
       .parse(d),
   )
@@ -31,7 +41,7 @@ export const updateProfile = createServerFn({ method: "POST" })
       .eq("id", userId)
       .select()
       .single();
-    if (error) throw new Error(error.message);
+    if (error) logAndFail("updateProfile", error);
     return out;
   });
 
@@ -44,7 +54,7 @@ export const listThreads = createServerFn({ method: "GET" })
       .select("*")
       .eq("user_id", userId)
       .order("updated_at", { ascending: false });
-    if (error) throw new Error(error.message);
+    if (error) logAndFail("listThreads", error);
     return data;
   });
 
@@ -54,9 +64,9 @@ export const createThread = createServerFn({ method: "POST" })
     z
       .object({
         title: z.string().min(1).max(120).optional(),
-        language: z.string(),
-        level: z.enum(["Beginner", "Intermediate", "Advanced"]),
-        native_language: z.string().optional(),
+        language: LanguageEnum,
+        level: LevelEnum,
+        native_language: LanguageEnum.optional(),
       })
       .parse(d),
   )
@@ -65,7 +75,8 @@ export const createThread = createServerFn({ method: "POST" })
     let nativeLang = data.native_language;
     if (!nativeLang) {
       const { data: prof } = await supabase.from("profiles").select("native_language").eq("id", userId).maybeSingle();
-      nativeLang = prof?.native_language ?? "English";
+      const candidate = prof?.native_language ?? "English";
+      nativeLang = (LANG_CODES as readonly string[]).includes(candidate) ? candidate : "English";
     }
     const { data: out, error } = await supabase
       .from("threads")
@@ -78,7 +89,7 @@ export const createThread = createServerFn({ method: "POST" })
       })
       .select()
       .single();
-    if (error) throw new Error(error.message);
+    if (error) logAndFail("createThread", error);
     return out;
   });
 
@@ -88,7 +99,7 @@ export const deleteThread = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const { error } = await supabase.from("threads").delete().eq("id", data.id).eq("user_id", userId);
-    if (error) throw new Error(error.message);
+    if (error) logAndFail("deleteThread", error);
     return { ok: true };
   });
 
@@ -103,13 +114,14 @@ export const getThread = createServerFn({ method: "POST" })
       .eq("id", data.id)
       .eq("user_id", userId)
       .maybeSingle();
-    if (error) throw new Error(error.message);
+    if (error) logAndFail("getThread", error);
     if (!thread) return null;
-    const { data: messages } = await supabase
+    const { data: messages, error: mErr } = await supabase
       .from("messages")
       .select("*")
       .eq("thread_id", thread.id)
       .order("created_at", { ascending: true });
+    if (mErr) logAndFail("getThread.messages", mErr);
     return { thread, messages: messages ?? [] };
   });
 
@@ -122,6 +134,6 @@ export const listAchievements = createServerFn({ method: "GET" })
       .select("*")
       .eq("user_id", userId)
       .order("unlocked_at", { ascending: false });
-    if (error) throw new Error(error.message);
+    if (error) logAndFail("listAchievements", error);
     return data;
   });

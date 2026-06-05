@@ -1,9 +1,25 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { LANGUAGES } from "@/lib/languages";
 
 const GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
 const MODEL = "openai/gpt-5.4-mini";
+
+const LANG_CODES = LANGUAGES.map((l) => l.code) as [string, ...string[]];
+const LanguageEnum = z.enum(LANG_CODES);
+const LevelEnum = z.enum(["Beginner", "Intermediate", "Advanced"]);
+
+function safeLang(v: unknown, fallback = "English"): string {
+  return typeof v === "string" && (LANG_CODES as readonly string[]).includes(v) ? v : fallback;
+}
+function safeLevel(v: unknown, fallback = "Beginner"): string {
+  return v === "Beginner" || v === "Intermediate" || v === "Advanced" ? v : fallback;
+}
+function logAndFail(scope: string, error: unknown, userMessage = "Operation failed"): never {
+  console.error(`[ai:${scope}]`, error);
+  throw new Error(userMessage);
+}
 
 const ChatInput = z.object({
   threadId: z.string().uuid(),
@@ -69,7 +85,10 @@ export const chatWithTutor = createServerFn({ method: "POST" })
       .select("id, language, level, native_language")
       .eq("id", data.threadId)
       .single();
-    if (tErr || !thread) throw new Error("Thread not found");
+    if (tErr || !thread) {
+      if (tErr) console.error("[ai:chat.thread]", tErr);
+      throw new Error("Thread not found");
+    }
 
     // Save user message
     const { error: insErr } = await supabase.from("messages").insert({
@@ -78,7 +97,7 @@ export const chatWithTutor = createServerFn({ method: "POST" })
       role: "user",
       content: data.message,
     });
-    if (insErr) throw new Error(insErr.message);
+    if (insErr) logAndFail("chat.insertUserMessage", insErr, "Failed to save message");
 
     // Load recent history, then restore chronological order for the model.
     const { data: recentHistory } = await supabase
@@ -90,8 +109,12 @@ export const chatWithTutor = createServerFn({ method: "POST" })
 
     const history = (recentHistory ?? []).reverse();
 
+    const safeLanguage = safeLang(thread.language);
+    const safeLevelValue = safeLevel(thread.level);
+    const safeNative = safeLang(thread.native_language, "English");
+
     const messages = [
-      { role: "system", content: buildSystemPrompt(thread.language, thread.level, thread.native_language ?? "English") },
+      { role: "system", content: buildSystemPrompt(safeLanguage, safeLevelValue, safeNative) },
       ...(history ?? []).map((m) => ({ role: m.role, content: m.content })),
     ];
 
@@ -180,7 +203,7 @@ export const chatWithTutor = createServerFn({ method: "POST" })
     return parsed;
   });
 
-const ChallengeInput = z.object({ language: z.string(), level: z.string() });
+const ChallengeInput = z.object({ language: LanguageEnum, level: LevelEnum });
 
 export const getOrCreateDailyChallenge = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -214,7 +237,10 @@ export const getOrCreateDailyChallenge = createServerFn({ method: "POST" })
         ],
       }),
     });
-    if (!res.ok) throw new Error(`AI failed: ${res.status}`);
+    if (!res.ok) {
+      console.error("[ai:dailyChallenge]", res.status, await res.text().catch(() => ""));
+      throw new Error("Could not generate a daily challenge. Please try again.");
+    }
     const j = await res.json();
     const prompt = String(j?.choices?.[0]?.message?.content ?? "").trim() || `Have a 3-sentence conversation in ${data.language} about your day.`;
 
@@ -223,7 +249,7 @@ export const getOrCreateDailyChallenge = createServerFn({ method: "POST" })
       .insert({ user_id: userId, language: data.language, level: data.level, prompt, challenge_date: today })
       .select()
       .single();
-    if (error) throw new Error(error.message);
+    if (error) logAndFail("dailyChallenge.insert", error);
     return ins;
   });
 
@@ -239,7 +265,7 @@ export const completeDailyChallenge = createServerFn({ method: "POST" })
       .eq("user_id", userId)
       .select()
       .single();
-    if (error) throw new Error(error.message);
+    if (error) logAndFail("completeChallenge", error);
 
     const { data: prof } = await supabase.from("profiles").select("xp").eq("id", userId).maybeSingle();
     await supabase.from("profiles").update({ xp: (prof?.xp ?? 0) + (ch.xp_reward ?? 20) }).eq("id", userId);
