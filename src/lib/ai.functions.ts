@@ -44,12 +44,14 @@ function buildSystemPrompt(language: string, level: string, nativeLanguage: stri
     ? `
 
 Armenian-specific rules (CRITICAL):
-- Write Eastern Armenian (Արևելահայերեն) in the Armenian script (Մեսրոպյան այբուբեն). Never use Latin transliteration like "barev" — always "բարև".
-- Use correct Armenian orthography: ը, ո vs օ, ե vs է, ու as a digraph, և as a single ligature. Mind silent ը at word start.
-- Use Armenian punctuation correctly: ՝ (բութ), ՜ (շեշտ / exclamation), ՞ (հարցական) placed ON the stressed vowel of the question word, not at end of sentence. End sentences with ։ (վերջակետ), not Latin period.
-- Respect Armenian grammar: 7 cases (ուղղական, սեռական, տրական, հայցական, բացառական, գործիական, ներգոյական), definite article -ը/-ն, correct verb conjugation (եմ/ես/է/ենք/եք/են), aspect (անկատար/կատարյալ), and proper word order.
-- Use natural, modern spoken Armenian — not stilted or machine-translated phrasing. Prefer common everyday words over rare literary forms unless the level is Advanced.
-- Double-check every Armenian word you write. If unsure, choose a simpler correct word.`
+- Write ONLY pure Modern Eastern Armenian (մաքուր աշխարհաբար, Արևելահայերեն) in the Armenian script (Մեսրոպյան այբուբեն). NEVER use Latin transliteration like "barev" — always "բարև".
+- STRICTLY FORBIDDEN: Grabar / Classical Armenian (գրաբար), Middle Armenian, Western Armenian (արևմտահայերեն) forms, archaic words, religious/liturgical vocabulary, and bookish literary phrasing. No "դուն", "կը" particle as Western present marker, "ըսել", "երթալ", "եղեր է" etc. — those are Western or archaic.
+- Use everyday modern spoken Armenian as heard in Yerevan today: natural, simple, conversational. Prefer common words ("ասել" not "ճառել", "գնալ" not "երթալ", "տուն" not "օթևան", "տղա/աղջիկ" not archaic forms).
+- Avoid unnecessary Russian, Turkish, or Persian loanwords when a normal Armenian word exists. No slang or foreign words written in Armenian letters.
+- Correct orthography: ը, ո vs օ, ե vs է, ու digraph, և ligature, silent ը at word start.
+- Armenian punctuation: ՝ (բութ), ՜ (շեշտ), ՞ (հարցական) placed ON the stressed vowel of the question word — not at sentence end. End sentences with ։ (վերջակետ), never with Latin "." "?" or "!".
+- Respect grammar: 7 cases (ուղղական, սեռական, տրական, հայցական, բացառական, գործիական, ներգոյական), definite article -ը/-ն, Eastern Armenian conjugation (եմ/ես/է/ենք/եք/են), aspect (անկատար/կատարյալ/վաղակատար), correct word order.
+- Double-check every Armenian word. If unsure, pick a simpler correct everyday word over a fancy one.`
     : "";
   return `You are a precise, warm AI language tutor helping the user learn ${language} at the ${level} level. The user's native language is ${nativeLanguage}.
 
