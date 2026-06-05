@@ -199,15 +199,19 @@ export const chatWithTutor = createServerFn({ method: "POST" })
       parsed = { reply: String(raw), correction: null, explanation: null, vocab: [] };
     }
 
+    const finalReply = safeLanguage.toLowerCase() === "armenian" || safeNative.toLowerCase() === "armenian"
+      ? forceArmenianOnly(parsed)
+      : parsed;
+
     // Save assistant message
     await supabase.from("messages").insert({
       thread_id: thread.id,
       user_id: userId,
       role: "assistant",
-      content: parsed.reply,
-      correction: parsed.correction,
-      explanation: parsed.explanation,
-      vocab: parsed.vocab,
+      content: finalReply.reply,
+      correction: finalReply.correction,
+      explanation: finalReply.explanation,
+      vocab: finalReply.vocab,
     });
 
     // Bump thread updated_at + xp + streak
@@ -246,7 +250,7 @@ export const chatWithTutor = createServerFn({ method: "POST" })
       }
     }
 
-    return parsed;
+    return finalReply;
   });
 
 const ChallengeInput = z.object({ language: LanguageEnum, level: LevelEnum });
