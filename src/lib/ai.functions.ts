@@ -4,7 +4,9 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { LANGUAGES } from "@/lib/languages";
 
 const GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
-const MODEL = "openai/gpt-5.4-mini";
+// Use a stronger model for higher linguistic accuracy, especially for
+// lower-resource languages like Armenian.
+const MODEL = "openai/gpt-5.5";
 
 const LANG_CODES = LANGUAGES.map((l) => l.code) as [string, ...string[]];
 const LanguageEnum = z.enum(LANG_CODES);
