@@ -37,11 +37,36 @@ type AiReply = {
   vocab: Vocab;
 };
 
+const LATIN_LETTERS = /[A-Za-z]/;
+
+function containsLatinLetters(value: unknown): value is string {
+  return typeof value === "string" && LATIN_LETTERS.test(value);
+}
+
+function forceArmenianOnly(reply: AiReply): AiReply {
+  return {
+    reply: containsLatinLetters(reply.reply) ? "Լավ, սկսենք պարզ հարցից։ Ինչպե՞ս ես այսօր։" : reply.reply,
+    correction: containsLatinLetters(reply.correction) ? null : reply.correction,
+    explanation: containsLatinLetters(reply.explanation)
+      ? "Նախադասությունը հարմարեցվել է բնական, ժամանակակից արևելահայերեն խոսքին։"
+      : reply.explanation,
+    vocab: reply.vocab
+      .filter((item) => !containsLatinLetters(item.word))
+      .map((item) => ({
+        word: String(item.word ?? ""),
+        meaning: containsLatinLetters(item.meaning) ? "օգտակար բառ զրույցից" : String(item.meaning ?? ""),
+      }))
+      .filter((item) => item.word.trim().length > 0)
+      .slice(0, 4),
+  };
+}
+
 function buildSystemPrompt(language: string, level: string, nativeLanguage: string) {
   const sameLang = language.toLowerCase() === nativeLanguage.toLowerCase();
   const targetIsArmenian = language.toLowerCase() === "armenian";
   const nativeIsArmenian = nativeLanguage.toLowerCase() === "armenian";
   const anyArmenianOutput = targetIsArmenian || nativeIsArmenian;
+  const explanationLanguage = targetIsArmenian ? "Armenian" : nativeLanguage;
   const armenianRules = anyArmenianOutput
     ? `
 
@@ -74,11 +99,12 @@ Correction rules:
 - If the user's last message has any grammar, spelling, word-choice, or punctuation issue in ${language}, provide a corrected version of THEIR message in ${language}.
 - The correction MUST preserve the user's exact meaning. Do not add ideas from earlier messages and do not replace the user's sentence with your own sentence.
 - If the user wrote in ${nativeLanguage} (or another language) while learning ${language}, translate only their exact latest message into correct ${language} as the "correction".
-- Write the "explanation" in ${nativeLanguage}${sameLang ? "" : ` (NOT in ${language})`}, short and clear, explaining WHY the correction was made.
+- Write the "explanation" in ${explanationLanguage}${targetIsArmenian ? " only, using clean Modern Eastern Armenian" : sameLang ? "" : ` (NOT in ${language})`}, short and clear, explaining WHY the correction was made.
 - If the user's message is already perfect, set "correction" and "explanation" to null.
 
 Vocabulary:
-- Suggest 2–4 useful words taken from your own reply, with short meanings written in ${nativeLanguage}.
+- Suggest 2–4 useful words taken from your own reply, with short meanings written in ${explanationLanguage}.
+- If ${language} is Armenian, the reply, correction, explanation, vocabulary words, and vocabulary meanings must ALL be in Armenian only. Do not use English anywhere in the JSON values.
 - If ${nativeLanguage} is Armenian, explanations and vocabulary meanings must follow the Armenian-specific rules exactly.
 
 You MUST respond as a single JSON object with exactly these keys:
@@ -173,15 +199,19 @@ export const chatWithTutor = createServerFn({ method: "POST" })
       parsed = { reply: String(raw), correction: null, explanation: null, vocab: [] };
     }
 
+    const finalReply = safeLanguage.toLowerCase() === "armenian" || safeNative.toLowerCase() === "armenian"
+      ? forceArmenianOnly(parsed)
+      : parsed;
+
     // Save assistant message
     await supabase.from("messages").insert({
       thread_id: thread.id,
       user_id: userId,
       role: "assistant",
-      content: parsed.reply,
-      correction: parsed.correction,
-      explanation: parsed.explanation,
-      vocab: parsed.vocab,
+      content: finalReply.reply,
+      correction: finalReply.correction,
+      explanation: finalReply.explanation,
+      vocab: finalReply.vocab,
     });
 
     // Bump thread updated_at + xp + streak
@@ -220,7 +250,7 @@ export const chatWithTutor = createServerFn({ method: "POST" })
       }
     }
 
-    return parsed;
+    return finalReply;
   });
 
 const ChallengeInput = z.object({ language: LanguageEnum, level: LevelEnum });
