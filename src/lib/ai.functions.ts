@@ -203,7 +203,7 @@ export const chatWithTutor = createServerFn({ method: "POST" })
     return parsed;
   });
 
-const ChallengeInput = z.object({ language: z.string(), level: z.string() });
+const ChallengeInput = z.object({ language: LanguageEnum, level: LevelEnum });
 
 export const getOrCreateDailyChallenge = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -237,7 +237,10 @@ export const getOrCreateDailyChallenge = createServerFn({ method: "POST" })
         ],
       }),
     });
-    if (!res.ok) throw new Error(`AI failed: ${res.status}`);
+    if (!res.ok) {
+      console.error("[ai:dailyChallenge]", res.status, await res.text().catch(() => ""));
+      throw new Error("Could not generate a daily challenge. Please try again.");
+    }
     const j = await res.json();
     const prompt = String(j?.choices?.[0]?.message?.content ?? "").trim() || `Have a 3-sentence conversation in ${data.language} about your day.`;
 
@@ -246,7 +249,7 @@ export const getOrCreateDailyChallenge = createServerFn({ method: "POST" })
       .insert({ user_id: userId, language: data.language, level: data.level, prompt, challenge_date: today })
       .select()
       .single();
-    if (error) throw new Error(error.message);
+    if (error) logAndFail("dailyChallenge.insert", error);
     return ins;
   });
 
@@ -262,7 +265,7 @@ export const completeDailyChallenge = createServerFn({ method: "POST" })
       .eq("user_id", userId)
       .select()
       .single();
-    if (error) throw new Error(error.message);
+    if (error) logAndFail("completeChallenge", error);
 
     const { data: prof } = await supabase.from("profiles").select("xp").eq("id", userId).maybeSingle();
     await supabase.from("profiles").update({ xp: (prof?.xp ?? 0) + (ch.xp_reward ?? 20) }).eq("id", userId);
