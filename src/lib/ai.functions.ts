@@ -1,9 +1,25 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { LANGUAGES } from "@/lib/languages";
 
 const GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
 const MODEL = "openai/gpt-5.4-mini";
+
+const LANG_CODES = LANGUAGES.map((l) => l.code) as [string, ...string[]];
+const LanguageEnum = z.enum(LANG_CODES);
+const LevelEnum = z.enum(["Beginner", "Intermediate", "Advanced"]);
+
+function safeLang(v: unknown, fallback = "English"): string {
+  return typeof v === "string" && (LANG_CODES as readonly string[]).includes(v) ? v : fallback;
+}
+function safeLevel(v: unknown, fallback = "Beginner"): string {
+  return v === "Beginner" || v === "Intermediate" || v === "Advanced" ? v : fallback;
+}
+function logAndFail(scope: string, error: unknown, userMessage = "Operation failed"): never {
+  console.error(`[ai:${scope}]`, error);
+  throw new Error(userMessage);
+}
 
 const ChatInput = z.object({
   threadId: z.string().uuid(),
