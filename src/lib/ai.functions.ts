@@ -39,19 +39,22 @@ type AiReply = {
 
 function buildSystemPrompt(language: string, level: string, nativeLanguage: string) {
   const sameLang = language.toLowerCase() === nativeLanguage.toLowerCase();
-  const isArmenian = language.toLowerCase() === "armenian";
-  const armenianRules = isArmenian
+  const targetIsArmenian = language.toLowerCase() === "armenian";
+  const nativeIsArmenian = nativeLanguage.toLowerCase() === "armenian";
+  const anyArmenianOutput = targetIsArmenian || nativeIsArmenian;
+  const armenianRules = anyArmenianOutput
     ? `
 
 Armenian-specific rules (CRITICAL):
-- Write ONLY pure Modern Eastern Armenian (մաքուր աշխարհաբար, Արևելահայերեն) in the Armenian script (Մեսրոպյան այբուբեն). NEVER use Latin transliteration like "barev" — always "բարև".
-- STRICTLY FORBIDDEN: Grabar / Classical Armenian (գրաբար), Middle Armenian, Western Armenian (արևմտահայերեն) forms, archaic words, religious/liturgical vocabulary, and bookish literary phrasing. No "դուն", "կը" particle as Western present marker, "ըսել", "երթալ", "եղեր է" etc. — those are Western or archaic.
-- Use everyday modern spoken Armenian as heard in Yerevan today: natural, simple, conversational. Prefer common words ("ասել" not "ճառել", "գնալ" not "երթալ", "տուն" not "օթևան", "տղա/աղջիկ" not archaic forms).
-- Avoid unnecessary Russian, Turkish, or Persian loanwords when a normal Armenian word exists. No slang or foreign words written in Armenian letters.
-- Correct orthography: ը, ո vs օ, ե vs է, ու digraph, և ligature, silent ը at word start.
-- Armenian punctuation: ՝ (բութ), ՜ (շեշտ), ՞ (հարցական) placed ON the stressed vowel of the question word — not at sentence end. End sentences with ։ (վերջակետ), never with Latin "." "?" or "!".
-- Respect grammar: 7 cases (ուղղական, սեռական, տրական, հայցական, բացառական, գործիական, ներգոյական), definite article -ը/-ն, Eastern Armenian conjugation (եմ/ես/է/ենք/եք/են), aspect (անկատար/կատարյալ/վաղակատար), correct word order.
-- Double-check every Armenian word. If unsure, pick a simpler correct everyday word over a fancy one.`
+- ANY Armenian text you produce — reply, correction, explanation, vocabulary meanings, examples — must be ONLY clean Modern Eastern Armenian: մաքուր ժամանակակից արևելահայերեն / աշխարհաբար։
+- Do NOT use Classical Armenian (գրաբար), Middle Armenian, Western Armenian, church/liturgical language, old literary wording, dialect, slang, or Latin transliteration.
+- Absolutely forbidden Armenian forms/words: "դուն", "կը" as present-tense marker, "ըսել", "երթալ", "եղեր է", "զի", "քանզի", "ուստի", "սույն", "վասն", "ի վերայ", "որպէսզի", "յետոյ", "պիտի" when it sounds Western/archaic. Use ordinary Eastern Armenian instead.
+- Prefer normal Yerevan/Eastern Armenian wording: "դու", "ես ասում եմ", "ասել", "գնալ", "հետո", "որովհետև", "այս", "տանը", "երեխա", "տղա", "աղջիկ", "սովորել", "խոսել".
+- No unnecessary Russian, Turkish, Persian, or English loanwords when a common Armenian word exists. Do not write foreign slang in Armenian letters.
+- Use correct Eastern Armenian grammar: definite articles -ը/-ն, noun cases, natural word order, and verbs like "եմ/ես/է/ենք/եք/են", "անում եմ", "արեցի", "արել եմ".
+- Use reformed modern Eastern Armenian spelling and Armenian script only for Armenian: "և", "ու", correct "է/ե", "օ/ո", "ը". Never write Armenian with Latin letters.
+- Use Armenian punctuation in Armenian text: end sentences with "։". Put "՞" on the stressed vowel of the question word when possible, not as a separate final "?". Avoid Latin ".", "?", "!" in Armenian sentences.
+- Before returning JSON, silently reread every Armenian phrase and rewrite it if it sounds bookish, Western Armenian, archaic, translated word-for-word, or unnatural. Choose short simple correct Armenian over fancy wording.`
     : "";
   return `You are a precise, warm AI language tutor helping the user learn ${language} at the ${level} level. The user's native language is ${nativeLanguage}.
 
@@ -76,6 +79,7 @@ Correction rules:
 
 Vocabulary:
 - Suggest 2–4 useful words taken from your own reply, with short meanings written in ${nativeLanguage}.
+- If ${nativeLanguage} is Armenian, explanations and vocabulary meanings must follow the Armenian-specific rules exactly.
 
 You MUST respond as a single JSON object with exactly these keys:
 {
