@@ -54,7 +54,9 @@ export function useVoiceRecognition(language: string) {
   return { listening, transcript, supported, start, stop };
 }
 
-export function speak(text: string, language: string) {
+let currentAudio: HTMLAudioElement | null = null;
+
+function fallbackBrowserSpeak(text: string, language: string) {
   if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
   const synth = window.speechSynthesis;
   synth.cancel();
@@ -62,4 +64,40 @@ export function speak(text: string, language: string) {
   u.lang = bcp47For(language);
   u.rate = 0.95;
   synth.speak(u);
+}
+
+export async function speak(text: string, language: string) {
+  if (typeof window === "undefined") return;
+  const trimmed = text?.trim();
+  if (!trimmed) return;
+
+  // Stop any in-flight playback
+  try {
+    if (currentAudio) {
+      currentAudio.pause();
+      currentAudio.src = "";
+      currentAudio = null;
+    }
+    if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+  } catch {
+    /* noop */
+  }
+
+  try {
+    const res = await fetch("/api/tts", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: trimmed, voice: "George" }),
+    });
+    if (!res.ok) throw new Error(`TTS ${res.status}`);
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const audio = new Audio(url);
+    currentAudio = audio;
+    audio.onended = () => URL.revokeObjectURL(url);
+    audio.onerror = () => URL.revokeObjectURL(url);
+    await audio.play();
+  } catch {
+    fallbackBrowserSpeak(trimmed, language);
+  }
 }
