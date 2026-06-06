@@ -2,13 +2,16 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
 const VOICE_MAP: Record<string, string> = {
-  George: "JBFqnCBsd6RMkjVDRZzb",
+  Matilda: "XrExE9yKIg1WjnnlVkGX",
   Sarah: "EXAVITQu4vr4xnSDxMaL",
+  Charlotte: "XB0fDUnXU5powFXDhCwa",
+  George: "JBFqnCBsd6RMkjVDRZzb",
   Charlie: "IKne3meq5aSn9XLyUdCD",
   Alice: "Xb7hH8MSUJpSbSDYk0k2",
 };
 
-const DEFAULT_VOICE_ID = VOICE_MAP.George;
+// Matilda has cleaner pronunciation on non-English languages (less accent).
+const DEFAULT_VOICE_ID = VOICE_MAP.Matilda;
 
 export const ttsSpeak = createServerFn({ method: "POST" })
   .inputValidator(

@@ -4,9 +4,9 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { LANGUAGES } from "@/lib/languages";
 
 const GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
-// Use a stronger model for higher linguistic accuracy, especially for
-// lower-resource languages like Armenian.
-const MODEL = "openai/gpt-5.5";
+// Fast model with strong multilingual support (including Armenian).
+// Gemini Flash answers in ~1-2s vs ~5-10s for gpt-5.5.
+const MODEL = "google/gemini-3-flash-preview";
 
 const LANG_CODES = LANGUAGES.map((l) => l.code) as [string, ...string[]];
 const LanguageEnum = z.enum(LANG_CODES);
