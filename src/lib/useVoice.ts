@@ -84,18 +84,11 @@ export async function speak(text: string, language: string) {
   }
 
   try {
-    const res = await fetch("/api/tts", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text: trimmed, voice: "George" }),
-    });
-    if (!res.ok) throw new Error(`TTS ${res.status}`);
-    const blob = await res.blob();
-    const url = URL.createObjectURL(blob);
+    const { ttsSpeak } = await import("@/lib/tts.functions");
+    const result = await ttsSpeak({ data: { text: trimmed, voice: "George" } });
+    const url = `data:${result.mime};base64,${result.audio}`;
     const audio = new Audio(url);
     currentAudio = audio;
-    audio.onended = () => URL.revokeObjectURL(url);
-    audio.onerror = () => URL.revokeObjectURL(url);
     await audio.play();
   } catch {
     fallbackBrowserSpeak(trimmed, language);
