@@ -10,8 +10,7 @@ const VOICE_MAP: Record<string, string> = {
   Alice: "Xb7hH8MSUJpSbSDYk0k2",
 };
 
-// Matilda has cleaner pronunciation on non-English languages (less accent).
-const DEFAULT_VOICE_ID = VOICE_MAP.Matilda;
+const DEFAULT_VOICE_ID = VOICE_MAP.George;
 
 export const ttsSpeak = createServerFn({ method: "POST" })
   .inputValidator(
