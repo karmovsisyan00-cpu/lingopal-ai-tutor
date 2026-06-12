@@ -85,7 +85,7 @@ export async function speak(text: string, language: string) {
 
   try {
     const { ttsSpeak } = await import("@/lib/tts.functions");
-    const result = await ttsSpeak({ data: { text: trimmed, voice: "George" } });
+    const result = await ttsSpeak({ data: { text: trimmed, voice: "D4R2GKT3PhtzOVCbiNsg" } });
     const url = `data:${result.mime};base64,${result.audio}`;
     const audio = new Audio(url);
     currentAudio = audio;

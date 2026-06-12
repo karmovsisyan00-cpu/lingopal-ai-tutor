@@ -10,7 +10,7 @@ const VOICE_MAP: Record<string, string> = {
   Alice: "Xb7hH8MSUJpSbSDYk0k2",
 };
 
-const DEFAULT_VOICE_ID = VOICE_MAP.George;
+const DEFAULT_VOICE_ID = "D4R2GKT3PhtzOVCbiNsg";
 
 export const ttsSpeak = createServerFn({ method: "POST" })
   .inputValidator(
