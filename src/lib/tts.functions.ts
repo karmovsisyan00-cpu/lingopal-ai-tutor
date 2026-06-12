@@ -10,7 +10,7 @@ const VOICE_MAP: Record<string, string> = {
   Alice: "Xb7hH8MSUJpSbSDYk0k2",
 };
 
-const DEFAULT_VOICE_ID = VOICE_MAP.George;
+const DEFAULT_VOICE_ID = "D4R2GKT3PhtzOVCbiNsg";
 
 export const ttsSpeak = createServerFn({ method: "POST" })
   .inputValidator(
@@ -24,7 +24,7 @@ export const ttsSpeak = createServerFn({ method: "POST" })
     if (!apiKey) throw new Error("ElevenLabs not configured");
 
     const voiceId =
-      (data.voice && VOICE_MAP[data.voice]) || DEFAULT_VOICE_ID;
+      (data.voice && (VOICE_MAP[data.voice] || (/^[A-Za-z0-9]{20}$/.test(data.voice) ? data.voice : null))) || DEFAULT_VOICE_ID;
 
     const r = await fetch(
       `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}?output_format=mp3_44100_128`,
