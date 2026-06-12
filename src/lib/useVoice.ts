@@ -66,6 +66,8 @@ function fallbackBrowserSpeak(text: string, language: string) {
   synth.speak(u);
 }
 
+const ARMENIAN_RE = /[\u0530-\u058F\uFB13-\uFB17]/;
+
 export async function speak(text: string, language: string) {
   if (typeof window === "undefined") return;
   const trimmed = text?.trim();
@@ -82,6 +84,16 @@ export async function speak(text: string, language: string) {
   } catch {
     /* noop */
   }
+
+  // Armenian: ElevenLabs mispronounces it. Use the OS's native Armenian
+  // voice for correct pronunciation (if unavailable, stay silent).
+  const isArmenian =
+    language.toLowerCase() === "armenian" || ARMENIAN_RE.test(trimmed);
+  if (isArmenian) {
+    fallbackBrowserSpeak(trimmed, "Armenian");
+    return;
+  }
+
 
   try {
     const { ttsSpeak } = await import("@/lib/tts.functions");
