@@ -85,14 +85,26 @@ export async function speak(text: string, language: string) {
     /* noop */
   }
 
-  // Armenian: ElevenLabs mispronounces it. Use the OS's native Armenian
-  // voice for correct pronunciation (if unavailable, stay silent).
+  // Armenian: use Microsoft Azure Speech neural voices (hy-AM) for natural,
+  // accurate pronunciation. Fall back to OS voice if Azure fails.
   const isArmenian =
     language.toLowerCase() === "armenian" || ARMENIAN_RE.test(trimmed);
   if (isArmenian) {
-    fallbackBrowserSpeak(trimmed, "Armenian");
+    try {
+      const { azureTtsSpeak } = await import("@/lib/azureTts.functions");
+      const result = await azureTtsSpeak({
+        data: { text: trimmed, voice: "hy-AM-AnahitNeural" },
+      });
+      const url = `data:${result.mime};base64,${result.audio}`;
+      const audio = new Audio(url);
+      currentAudio = audio;
+      await audio.play();
+    } catch {
+      fallbackBrowserSpeak(trimmed, "Armenian");
+    }
     return;
   }
+
 
 
   try {
