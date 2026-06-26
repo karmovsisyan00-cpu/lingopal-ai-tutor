@@ -12,8 +12,11 @@ export const azureTtsSpeak = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     const key = process.env.AZURE_SPEECH_KEY;
-    const region = process.env.AZURE_SPEECH_REGION;
-    if (!key || !region) throw new Error("Azure Speech not configured");
+    const rawRegion = process.env.AZURE_SPEECH_REGION;
+    if (!key || !rawRegion) throw new Error("Azure Speech not configured");
+
+    // Normalize: "East US" -> "eastus"; strip whitespace and lowercase.
+    const region = rawRegion.trim().toLowerCase().replace(/\s+/g, "");
 
     const voice = data.voice ?? "hy-AM-AnahitNeural";
     const escaped = data.text
@@ -27,9 +30,11 @@ export const azureTtsSpeak = createServerFn({ method: "POST" })
       `<speak version='1.0' xml:lang='hy-AM'>` +
       `<voice name='${voice}'>${escaped}</voice></speak>`;
 
-    const r = await fetch(
-      `https://${region}.tts.speech.microsoft.com/cognitiveservices/v1`,
-      {
+    const endpoint = `https://${region}.tts.speech.microsoft.com/cognitiveservices/v1`;
+
+    let r: Response;
+    try {
+      r = await fetch(endpoint, {
         method: "POST",
         headers: {
           "Ocp-Apim-Subscription-Key": key,
@@ -38,8 +43,14 @@ export const azureTtsSpeak = createServerFn({ method: "POST" })
           "User-Agent": "lingua-tutor",
         },
         body: ssml,
-      },
-    );
+      });
+    } catch (e) {
+      console.error("Azure TTS fetch failed", { endpoint, error: String(e) });
+      throw new Error(
+        `Azure TTS network error to ${endpoint}. Check AZURE_SPEECH_REGION (e.g. 'eastus').`,
+      );
+    }
+
 
     if (!r.ok) {
       const err = await r.text();
