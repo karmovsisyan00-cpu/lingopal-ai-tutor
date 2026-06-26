@@ -35,16 +35,20 @@ export const azureTtsSpeak = createServerFn({ method: "POST" })
 
     let r: Response;
     try {
-      r = await fetch(endpoint, {
-        method: "POST",
-        headers: {
-          "Ocp-Apim-Subscription-Key": key,
-          "Content-Type": "application/ssml+xml",
-          "X-Microsoft-OutputFormat": "audio-24khz-48kbitrate-mono-mp3",
-          "User-Agent": "lingua-tutor",
+      r = await fetchWithRetry(
+        endpoint,
+        {
+          method: "POST",
+          headers: {
+            "Ocp-Apim-Subscription-Key": key,
+            "Content-Type": "application/ssml+xml",
+            "X-Microsoft-OutputFormat": "audio-24khz-48kbitrate-mono-mp3",
+            "User-Agent": "lingua-tutor",
+          },
+          body: ssml,
         },
-        body: ssml,
-      });
+        { retries: 2, timeoutMs: 15000 },
+      );
     } catch (e) {
       console.error("Azure TTS fetch failed", { endpoint, error: String(e) });
       throw new Error(
