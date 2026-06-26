@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { LANGUAGES } from "@/lib/languages";
+import { fetchWithRetry } from "@/lib/fetch-retry.server";
 
 const GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
 // Fast model with strong multilingual support (including Armenian).
@@ -164,18 +165,22 @@ export const chatWithTutor = createServerFn({ method: "POST" })
       ...(history ?? []).map((m) => ({ role: m.role, content: m.content })),
     ];
 
-    const res = await fetch(GATEWAY_URL, {
-      method: "POST",
-      headers: {
-        "Lovable-API-Key": apiKey,
-        "Content-Type": "application/json",
+    const res = await fetchWithRetry(
+      GATEWAY_URL,
+      {
+        method: "POST",
+        headers: {
+          "Lovable-API-Key": apiKey,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: MODEL,
+          messages,
+          response_format: { type: "json_object" },
+        }),
       },
-      body: JSON.stringify({
-        model: MODEL,
-        messages,
-        response_format: { type: "json_object" },
-      }),
-    });
+      { retries: 2, timeoutMs: 20000 },
+    );
 
     if (!res.ok) {
       const text = await res.text();
@@ -273,20 +278,24 @@ export const getOrCreateDailyChallenge = createServerFn({ method: "POST" })
     const apiKey = process.env.LOVABLE_API_KEY;
     if (!apiKey) throw new Error("Missing LOVABLE_API_KEY");
 
-    const res = await fetch(GATEWAY_URL, {
-      method: "POST",
-      headers: { "Lovable-API-Key": apiKey, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: MODEL,
-        messages: [
-          { role: "system", content: "You generate short, fun daily language-learning challenges." },
-          {
-            role: "user",
-            content: `Generate ONE short daily learning challenge for a ${data.level} learner of ${data.language}. One sentence, in English, telling them what to practice today (e.g., "Describe what you ate for breakfast in ${data.language}."). Return only the sentence, no quotes.`,
-          },
-        ],
-      }),
-    });
+    const res = await fetchWithRetry(
+      GATEWAY_URL,
+      {
+        method: "POST",
+        headers: { "Lovable-API-Key": apiKey, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: MODEL,
+          messages: [
+            { role: "system", content: "You generate short, fun daily language-learning challenges." },
+            {
+              role: "user",
+              content: `Generate ONE short daily learning challenge for a ${data.level} learner of ${data.language}. One sentence, in English, telling them what to practice today (e.g., "Describe what you ate for breakfast in ${data.language}."). Return only the sentence, no quotes.`,
+            },
+          ],
+        }),
+      },
+      { retries: 2, timeoutMs: 15000 },
+    );
     if (!res.ok) {
       console.error("[ai:dailyChallenge]", res.status, await res.text().catch(() => ""));
       throw new Error("Could not generate a daily challenge. Please try again.");
