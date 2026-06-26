@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { fetchWithRetry } from "@/lib/fetch-retry.server";
 
 const VOICE_MAP: Record<string, string> = {
   Matilda: "XrExE9yKIg1WjnnlVkGX",
@@ -26,7 +27,7 @@ export const ttsSpeak = createServerFn({ method: "POST" })
     const voiceId =
       (data.voice && (VOICE_MAP[data.voice] || (/^[A-Za-z0-9]{20}$/.test(data.voice) ? data.voice : null))) || DEFAULT_VOICE_ID;
 
-    const r = await fetch(
+    const r = await fetchWithRetry(
       `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}?output_format=mp3_44100_128`,
       {
         method: "POST",
@@ -46,6 +47,7 @@ export const ttsSpeak = createServerFn({ method: "POST" })
           },
         }),
       },
+      { retries: 2, timeoutMs: 15000 },
     );
 
     if (!r.ok) {
