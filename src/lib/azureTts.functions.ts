@@ -35,37 +35,51 @@ export const azureTtsSpeak = createServerFn({ method: "POST" })
 
     const endpoint = `https://${region}.tts.speech.microsoft.com/cognitiveservices/v1`;
 
-    let r: Response;
-    try {
-      r = await fetchWithRetry(
-        endpoint,
-        {
-          method: "POST",
-          headers: {
-            "Ocp-Apim-Subscription-Key": key,
-            "Content-Type": "application/ssml+xml",
-            "X-Microsoft-OutputFormat": "audio-24khz-48kbitrate-mono-mp3",
-            "User-Agent": "lingua-tutor",
-          },
-          body: ssml,
-        },
-        { retries: 2, timeoutMs: 15000 },
-      );
-    } catch (e) {
-      console.error("Azure TTS fetch failed", { endpoint, error: String(e) });
-      throw new Error(
-        `Azure TTS network error to ${endpoint}. Check AZURE_SPEECH_REGION (e.g. 'eastus').`,
-      );
-    }
+    return await withRequestLog(
+      "azure.tts",
+      async (reqId) => {
+        let r: Response;
+        try {
+          r = await fetchWithRetry(
+            endpoint,
+            {
+              method: "POST",
+              headers: {
+                "Ocp-Apim-Subscription-Key": key,
+                "Content-Type": "application/ssml+xml",
+                "X-Microsoft-OutputFormat": "audio-24khz-48kbitrate-mono-mp3",
+                "User-Agent": "lingua-tutor",
+                "X-Request-Id": reqId,
+              },
+              body: ssml,
+            },
+            { retries: 2, timeoutMs: 15000 },
+          );
+        } catch (e) {
+          logError("azure.tts", reqId, e, { endpoint, phase: "network" });
+          throw new Error(
+            `Azure TTS network error to ${endpoint}. Check AZURE_SPEECH_REGION (e.g. 'eastus').`,
+          );
+        }
 
+        if (!r.ok) {
+          const err = await r.text().catch(() => "");
+          logError("azure.tts", reqId, new Error(`HTTP ${r.status}`), {
+            endpoint,
+            status: r.status,
+            body: err.slice(0, 500),
+          });
+          throw new Error(`Azure TTS failed: ${r.status}`);
+        }
 
-    if (!r.ok) {
-      const err = await r.text();
-      console.error("Azure TTS error", r.status, err);
-      throw new Error(`Azure TTS failed: ${r.status}`);
-    }
-
-    const buf = await r.arrayBuffer();
-    const base64 = Buffer.from(buf).toString("base64");
-    return { audio: base64, mime: "audio/mpeg" };
+        const buf = await r.arrayBuffer();
+        const base64 = Buffer.from(buf).toString("base64");
+        if (buf.byteLength < 200) {
+          logWarn("azure.tts", reqId, { message: "unexpectedly small audio payload", bytes: buf.byteLength });
+        }
+        return { audio: base64, mime: "audio/mpeg" };
+      },
+      { voice, region, textLen: data.text.length },
+    );
   });
+
