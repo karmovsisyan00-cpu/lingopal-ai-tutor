@@ -14,12 +14,36 @@ export const azureTtsSpeak = createServerFn({ method: "POST" })
     }).parse,
   )
   .handler(async ({ data }) => {
-    const key = process.env.AZURE_SPEECH_KEY;
-    const rawRegion = process.env.AZURE_SPEECH_REGION;
-    if (!key || !rawRegion) throw new Error("Azure Speech not configured");
+    const key = process.env.AZURE_SPEECH_KEY?.trim();
+    const rawRegion = process.env.AZURE_SPEECH_REGION?.trim();
+    if (!key || !rawRegion) {
+      throw new Error(
+        "Azure Speech is not configured. Set AZURE_SPEECH_KEY to your Speech resource key and AZURE_SPEECH_REGION to its region ID, for example 'eastus'.",
+      );
+    }
 
     // Normalize: "East US" -> "eastus"; strip whitespace and lowercase.
-    const region = rawRegion.trim().toLowerCase().replace(/\s+/g, "");
+    const region = rawRegion.toLowerCase().replace(/\s+/g, "");
+    const azureRegionPattern = /^[a-z]+[a-z0-9-]*$/;
+    const regionLooksLikeSecret =
+      region.startsWith("sk_") ||
+      region.includes(".") ||
+      region.length > 40 ||
+      /^[a-f0-9]{32,}$/i.test(region);
+    const keyLooksLikeRegion = azureRegionPattern.test(key.toLowerCase()) && key.length <= 32 && !/[0-9]/.test(key);
+    const keyLooksLikeAzureSpeechKey = /^[A-Za-z0-9+/=_-]{20,}$/.test(key) && !key.startsWith("sk_");
+
+    if (!azureRegionPattern.test(region) || regionLooksLikeSecret) {
+      throw new Error(
+        "Invalid AZURE_SPEECH_REGION. It must be the Azure Speech region ID such as 'eastus', 'westeurope', or 'swedencentral' — not an API key.",
+      );
+    }
+
+    if (!keyLooksLikeAzureSpeechKey || keyLooksLikeRegion) {
+      throw new Error(
+        "Invalid AZURE_SPEECH_KEY. It must be your Azure Speech resource key, not the region ID or another service token.",
+      );
+    }
 
     const voice = data.voice ?? "hy-AM-AnahitNeural";
     const escaped = data.text
