@@ -288,28 +288,39 @@ export const getOrCreateDailyChallenge = createServerFn({ method: "POST" })
     const apiKey = process.env.LOVABLE_API_KEY;
     if (!apiKey) throw new Error("Missing LOVABLE_API_KEY");
 
-    const res = await fetchWithRetry(
-      GATEWAY_URL,
-      {
-        method: "POST",
-        headers: { "Lovable-API-Key": apiKey, "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: MODEL,
-          messages: [
-            { role: "system", content: "You generate short, fun daily language-learning challenges." },
-            {
-              role: "user",
-              content: `Generate ONE short daily learning challenge for a ${data.level} learner of ${data.language}. One sentence, in English, telling them what to practice today (e.g., "Describe what you ate for breakfast in ${data.language}."). Return only the sentence, no quotes.`,
+    const res = await withRequestLog(
+      "ai.dailyChallenge",
+      (reqId) =>
+        fetchWithRetry(
+          GATEWAY_URL,
+          {
+            method: "POST",
+            headers: {
+              "Lovable-API-Key": apiKey,
+              "Content-Type": "application/json",
+              "X-Request-Id": reqId,
             },
-          ],
-        }),
-      },
-      { retries: 2, timeoutMs: 15000 },
+            body: JSON.stringify({
+              model: MODEL,
+              messages: [
+                { role: "system", content: "You generate short, fun daily language-learning challenges." },
+                {
+                  role: "user",
+                  content: `Generate ONE short daily learning challenge for a ${data.level} learner of ${data.language}. One sentence, in English, telling them what to practice today (e.g., "Describe what you ate for breakfast in ${data.language}."). Return only the sentence, no quotes.`,
+                },
+              ],
+            }),
+          },
+          { retries: 2, timeoutMs: 15000 },
+        ),
+      { language: data.language, level: data.level },
     );
     if (!res.ok) {
-      console.error("[ai:dailyChallenge]", res.status, await res.text().catch(() => ""));
+      const body = await res.text().catch(() => "");
+      logError("ai.dailyChallenge", "-", new Error(`HTTP ${res.status}`), { status: res.status, body: body.slice(0, 500) });
       throw new Error("Could not generate a daily challenge. Please try again.");
     }
+
     const j = await res.json();
     const prompt = String(j?.choices?.[0]?.message?.content ?? "").trim() || `Have a 3-sentence conversation in ${data.language} about your day.`;
 
