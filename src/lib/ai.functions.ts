@@ -167,29 +167,37 @@ export const chatWithTutor = createServerFn({ method: "POST" })
       ...(history ?? []).map((m) => ({ role: m.role, content: m.content })),
     ];
 
-    const res = await fetchWithRetry(
-      GATEWAY_URL,
-      {
-        method: "POST",
-        headers: {
-          "Lovable-API-Key": apiKey,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: MODEL,
-          messages,
-          response_format: { type: "json_object" },
-        }),
-      },
-      { retries: 2, timeoutMs: 20000 },
+    const res = await withRequestLog(
+      "ai.chat",
+      (reqId) =>
+        fetchWithRetry(
+          GATEWAY_URL,
+          {
+            method: "POST",
+            headers: {
+              "Lovable-API-Key": apiKey,
+              "Content-Type": "application/json",
+              "X-Request-Id": reqId,
+            },
+            body: JSON.stringify({
+              model: MODEL,
+              messages,
+              response_format: { type: "json_object" },
+            }),
+          },
+          { retries: 2, timeoutMs: 20000 },
+        ),
+      { threadId: thread.id, language: safeLanguage, level: safeLevelValue, historyLen: history.length },
     );
 
     if (!res.ok) {
       const text = await res.text();
+      logError("ai.chat", "-", new Error(`HTTP ${res.status}`), { status: res.status, body: text.slice(0, 500) });
       if (res.status === 429) throw new Error("Rate limit reached. Please slow down and try again.");
       if (res.status === 402) throw new Error("AI credits exhausted. Please add credits in Lovable workspace settings.");
       throw new Error(`AI request failed: ${res.status} ${text}`);
     }
+
 
     const json = await res.json();
     const raw = json?.choices?.[0]?.message?.content ?? "{}";
