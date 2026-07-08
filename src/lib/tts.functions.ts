@@ -1,6 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { fetchWithRetry } from "@/lib/fetch-retry.server";
+import { logError, withRequestLog } from "@/lib/logger.server";
+
 
 const VOICE_MAP: Record<string, string> = {
   Matilda: "XrExE9yKIg1WjnnlVkGX",
