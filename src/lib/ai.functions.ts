@@ -3,6 +3,8 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { LANGUAGES } from "@/lib/languages";
 import { fetchWithRetry } from "@/lib/fetch-retry.server";
+import { logError, withRequestLog } from "@/lib/logger.server";
+
 
 const GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
 // Fast model with strong multilingual support (including Armenian).
