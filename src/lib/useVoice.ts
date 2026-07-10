@@ -95,6 +95,10 @@ export async function speak(text: string, language: string) {
       const result = await azureTtsSpeak({
         data: { text: trimmed, voice: "hy-AM-AnahitNeural" },
       });
+      if (!result.ok || !result.audio || !result.mime) {
+        fallbackBrowserSpeak(trimmed, "Armenian");
+        return;
+      }
       const url = `data:${result.mime};base64,${result.audio}`;
       const audio = new Audio(url);
       currentAudio = audio;
@@ -109,7 +113,11 @@ export async function speak(text: string, language: string) {
 
   try {
     const { ttsSpeak } = await import("@/lib/tts.functions");
-    const result = await ttsSpeak({ data: { text: trimmed, voice: "D4R2GKT3PhtzOVCbiNsg" } });
+    const result = await ttsSpeak({ data: { text: trimmed, voice: "George" } });
+    if (!result.ok || !result.audio || !result.mime) {
+      fallbackBrowserSpeak(trimmed, language);
+      return;
+    }
     const url = `data:${result.mime};base64,${result.audio}`;
     const audio = new Audio(url);
     currentAudio = audio;
