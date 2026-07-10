@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as AppIndexRouteImport } from './routes/_app.index'
+import { Route as AppTtsTestRouteImport } from './routes/_app.tts-test'
 import { Route as AppProgressRouteImport } from './routes/_app.progress'
 import { Route as AppChatsRouteImport } from './routes/_app.chats'
 import { Route as AppChallengesRouteImport } from './routes/_app.challenges'
@@ -29,6 +30,11 @@ const AppRoute = AppRouteImport.update({
 const AppIndexRoute = AppIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppTtsTestRoute = AppTtsTestRouteImport.update({
+  id: '/tts-test',
+  path: '/tts-test',
   getParentRoute: () => AppRoute,
 } as any)
 const AppProgressRoute = AppProgressRouteImport.update({
@@ -58,6 +64,7 @@ export interface FileRoutesByFullPath {
   '/challenges': typeof AppChallengesRoute
   '/chats': typeof AppChatsRoute
   '/progress': typeof AppProgressRoute
+  '/tts-test': typeof AppTtsTestRoute
   '/chat/$threadId': typeof AppChatThreadIdRoute
 }
 export interface FileRoutesByTo {
@@ -65,6 +72,7 @@ export interface FileRoutesByTo {
   '/challenges': typeof AppChallengesRoute
   '/chats': typeof AppChatsRoute
   '/progress': typeof AppProgressRoute
+  '/tts-test': typeof AppTtsTestRoute
   '/': typeof AppIndexRoute
   '/chat/$threadId': typeof AppChatThreadIdRoute
 }
@@ -75,6 +83,7 @@ export interface FileRoutesById {
   '/_app/challenges': typeof AppChallengesRoute
   '/_app/chats': typeof AppChatsRoute
   '/_app/progress': typeof AppProgressRoute
+  '/_app/tts-test': typeof AppTtsTestRoute
   '/_app/': typeof AppIndexRoute
   '/_app/chat/$threadId': typeof AppChatThreadIdRoute
 }
@@ -86,9 +95,17 @@ export interface FileRouteTypes {
     | '/challenges'
     | '/chats'
     | '/progress'
+    | '/tts-test'
     | '/chat/$threadId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/auth' | '/challenges' | '/chats' | '/progress' | '/' | '/chat/$threadId'
+  to:
+    | '/auth'
+    | '/challenges'
+    | '/chats'
+    | '/progress'
+    | '/tts-test'
+    | '/'
+    | '/chat/$threadId'
   id:
     | '__root__'
     | '/_app'
@@ -96,6 +113,7 @@ export interface FileRouteTypes {
     | '/_app/challenges'
     | '/_app/chats'
     | '/_app/progress'
+    | '/_app/tts-test'
     | '/_app/'
     | '/_app/chat/$threadId'
   fileRoutesById: FileRoutesById
@@ -126,6 +144,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof AppIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/tts-test': {
+      id: '/_app/tts-test'
+      path: '/tts-test'
+      fullPath: '/tts-test'
+      preLoaderRoute: typeof AppTtsTestRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/progress': {
@@ -163,6 +188,7 @@ interface AppRouteChildren {
   AppChallengesRoute: typeof AppChallengesRoute
   AppChatsRoute: typeof AppChatsRoute
   AppProgressRoute: typeof AppProgressRoute
+  AppTtsTestRoute: typeof AppTtsTestRoute
   AppIndexRoute: typeof AppIndexRoute
   AppChatThreadIdRoute: typeof AppChatThreadIdRoute
 }
@@ -171,6 +197,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppChallengesRoute: AppChallengesRoute,
   AppChatsRoute: AppChatsRoute,
   AppProgressRoute: AppProgressRoute,
+  AppTtsTestRoute: AppTtsTestRoute,
   AppIndexRoute: AppIndexRoute,
   AppChatThreadIdRoute: AppChatThreadIdRoute,
 }
