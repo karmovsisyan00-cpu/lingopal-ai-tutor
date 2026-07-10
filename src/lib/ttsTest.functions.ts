@@ -7,7 +7,7 @@ type TestResult = {
   ok: boolean;
   status?: number;
   message: string;
-  details?: Record<string, unknown>;
+  details?: Record<string, string | number | boolean | null>;
   audio?: string;
   mime?: string;
 };
@@ -16,7 +16,7 @@ async function testAzure(): Promise<TestResult> {
   const key = process.env.AZURE_SPEECH_KEY?.trim();
   const rawRegion = process.env.AZURE_SPEECH_REGION?.trim();
 
-  const details: Record<string, unknown> = {
+  const details: Record<string, string | number | boolean | null> = {
     keyPresent: !!key,
     keyLength: key?.length ?? 0,
     regionPresent: !!rawRegion,
@@ -106,7 +106,7 @@ async function testAzure(): Promise<TestResult> {
 
 async function testElevenLabs(): Promise<TestResult> {
   const apiKey = process.env.ELEVENLABS_API_KEY?.trim();
-  const details: Record<string, unknown> = {
+  const details: Record<string, string | number | boolean | null> = {
     keyPresent: !!apiKey,
     keyLength: apiKey?.length ?? 0,
   };
