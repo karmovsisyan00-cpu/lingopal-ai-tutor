@@ -86,8 +86,6 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:card", content: "summary" },
       { name: "twitter:title", content: "Lingua — AI Language Tutor" },
       { name: "twitter:description", content: "Practice English, Russian, Armenian and more with a friendly AI tutor. Voice chat, grammar correction, daily challenges." },
-      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/7a25bea2-556b-4c8f-bb63-edec8b239b64" },
-      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/7a25bea2-556b-4c8f-bb63-edec8b239b64" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
