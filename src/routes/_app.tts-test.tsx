@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { ttsProviderTest } from "@/lib/ttsTest.functions";
 import { Button } from "@/components/ui/button";
@@ -15,6 +16,7 @@ export const Route = createFileRoute("/_app/tts-test")({
 type Result = Awaited<ReturnType<typeof ttsProviderTest>>;
 
 function TtsTestPage() {
+  const testTtsProvider = useServerFn(ttsProviderTest);
   const [azure, setAzure] = useState<Result | null>(null);
   const [eleven, setEleven] = useState<Result | null>(null);
   const [loading, setLoading] = useState<"azure" | "elevenlabs" | null>(null);
@@ -22,7 +24,7 @@ function TtsTestPage() {
   async function run(provider: "azure" | "elevenlabs") {
     setLoading(provider);
     try {
-      const r = await ttsProviderTest({ data: { provider } });
+      const r = await testTtsProvider({ data: { provider } });
       if (provider === "azure") setAzure(r);
       else setEleven(r);
     } catch (e) {
