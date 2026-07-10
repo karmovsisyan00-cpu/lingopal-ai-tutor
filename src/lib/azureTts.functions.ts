@@ -30,18 +30,10 @@ export const azureTtsSpeak = createServerFn({ method: "POST" })
       region.includes(".") ||
       region.length > 40 ||
       /^[a-f0-9]{32,}$/i.test(region);
-    const keyLooksLikeRegion = azureRegionPattern.test(key.toLowerCase()) && key.length <= 32 && !/[0-9]/.test(key);
-    const keyLooksLikeAzureSpeechKey = /^[A-Za-z0-9+/=_-]{20,}$/.test(key) && !key.startsWith("sk_");
 
     if (!azureRegionPattern.test(region) || regionLooksLikeSecret) {
       throw new Error(
         "Invalid AZURE_SPEECH_REGION. It must be the Azure Speech region ID such as 'eastus', 'westeurope', or 'swedencentral' — not an API key.",
-      );
-    }
-
-    if (!keyLooksLikeAzureSpeechKey || keyLooksLikeRegion) {
-      throw new Error(
-        "Invalid AZURE_SPEECH_KEY. It must be your Azure Speech resource key, not the region ID or another service token.",
       );
     }
 
