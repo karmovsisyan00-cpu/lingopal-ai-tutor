@@ -116,38 +116,6 @@ function resolveAzureConfig():
   }
 
   const normalizedRegion = normalizeAzureRegion(rawRegion);
-  if (looksLikeSecret(rawRegion) || !/^[a-z]+[a-z0-9-]*$/.test(normalizedRegion)) {
-    return {
-      ok: false,
-      error: "AZURE_SPEECH_REGION must be a region ID like eastus, westeurope, or swedencentral — not an API key or token.",
-      details: { ...baseDetails, normalizedRegion: looksLikeSecret(rawRegion) ? "hidden_secret_like_value" : normalizedRegion },
-    };
-  }
-
-  if (!AZURE_REGIONS.has(normalizedRegion)) {
-    return {
-      ok: false,
-      error: `AZURE_SPEECH_REGION '${normalizedRegion}' is not a recognized Azure Speech region ID. Use the Location/Region ID from the Speech resource, for example eastus, westeurope, or swedencentral.`,
-      details: { ...baseDetails, normalizedRegion },
-    };
-  }
-
-  if (key.startsWith("sk_")) {
-    return {
-      ok: false,
-      error: "AZURE_SPEECH_KEY looks like an ElevenLabs key. Use the Azure Speech resource key instead.",
-      details: baseDetails,
-    };
-  }
-
-  if (AZURE_REGIONS.has(normalizeAzureRegion(key))) {
-    return {
-      ok: false,
-      error: "AZURE_SPEECH_KEY contains a region value. Use the Azure Speech resource key instead.",
-      details: baseDetails,
-    };
-  }
-
   return { ok: true, key, region: normalizedRegion };
 }
 
