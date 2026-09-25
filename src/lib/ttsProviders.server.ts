@@ -18,48 +18,6 @@ export type TtsTestResult = {
   mime?: string;
 };
 
-const AZURE_REGIONS = new Set([
-  "australiaeast",
-  "australiasoutheast",
-  "brazilsouth",
-  "canadacentral",
-  "canadaeast",
-  "centralindia",
-  "centralus",
-  "eastasia",
-  "eastus",
-  "eastus2",
-  "francecentral",
-  "germanywestcentral",
-  "italynorth",
-  "japaneast",
-  "japanwest",
-  "jioindiawest",
-  "koreacentral",
-  "koreasouth",
-  "mexicocentral",
-  "northcentralus",
-  "northeurope",
-  "norwayeast",
-  "polandcentral",
-  "qatarcentral",
-  "southafricanorth",
-  "southcentralus",
-  "southeastasia",
-  "southindia",
-  "spaincentral",
-  "swedencentral",
-  "switzerlandnorth",
-  "uaenorth",
-  "uksouth",
-  "ukwest",
-  "westcentralus",
-  "westeurope",
-  "westindia",
-  "westus",
-  "westus2",
-  "westus3",
-]);
 
 const ELEVENLABS_VOICE_MAP: Record<string, string> = {
   Matilda: "XrExE9yKIg1WjnnlVkGX",
@@ -84,16 +42,6 @@ function normalizeAzureRegion(raw: string): string {
   return trimmed.replace(/[\s_-]+/g, "");
 }
 
-function looksLikeSecret(value: string): boolean {
-  const trimmed = value.trim();
-  return (
-    trimmed.startsWith("sk_") ||
-    trimmed.includes(".") ||
-    trimmed.length > 60 ||
-    /^[a-f0-9]{32,}$/i.test(trimmed) ||
-    /^eyJ[A-Za-z0-9_-]+/.test(trimmed)
-  );
-}
 
 function resolveAzureConfig():
   | { ok: true; key: string; region: string }
