@@ -9,22 +9,22 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AppRouteImport } from './routes/_app'
+import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AppIndexRouteImport } from './routes/_app.index'
-import { Route as AppTtsTestRouteImport } from './routes/_app.tts-test'
-import { Route as AppProgressRouteImport } from './routes/_app.progress'
-import { Route as AppChatsRouteImport } from './routes/_app.chats'
 import { Route as AppChallengesRouteImport } from './routes/_app.challenges'
+import { Route as AppChatsRouteImport } from './routes/_app.chats'
+import { Route as AppProgressRouteImport } from './routes/_app.progress'
+import { Route as AppTtsTestRouteImport } from './routes/_app.tts-test'
 import { Route as AppChatThreadIdRouteImport } from './routes/_app.chat.$threadId'
 
+const AppRoute = AppRouteImport.update({
+  id: '/_app',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AppRoute = AppRouteImport.update({
-  id: '/_app',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppIndexRoute = AppIndexRouteImport.update({
@@ -32,14 +32,9 @@ const AppIndexRoute = AppIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AppRoute,
 } as any)
-const AppTtsTestRoute = AppTtsTestRouteImport.update({
-  id: '/tts-test',
-  path: '/tts-test',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppProgressRoute = AppProgressRouteImport.update({
-  id: '/progress',
-  path: '/progress',
+const AppChallengesRoute = AppChallengesRouteImport.update({
+  id: '/challenges',
+  path: '/challenges',
   getParentRoute: () => AppRoute,
 } as any)
 const AppChatsRoute = AppChatsRouteImport.update({
@@ -47,9 +42,14 @@ const AppChatsRoute = AppChatsRouteImport.update({
   path: '/chats',
   getParentRoute: () => AppRoute,
 } as any)
-const AppChallengesRoute = AppChallengesRouteImport.update({
-  id: '/challenges',
-  path: '/challenges',
+const AppProgressRoute = AppProgressRouteImport.update({
+  id: '/progress',
+  path: '/progress',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppTtsTestRoute = AppTtsTestRouteImport.update({
+  id: '/tts-test',
+  path: '/tts-test',
   getParentRoute: () => AppRoute,
 } as any)
 const AppChatThreadIdRoute = AppChatThreadIdRouteImport.update({
@@ -125,18 +125,18 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/auth': {
-      id: '/auth'
-      path: '/auth'
-      fullPath: '/auth'
-      preLoaderRoute: typeof AuthRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/_app': {
       id: '/_app'
       path: ''
       fullPath: '/'
       preLoaderRoute: typeof AppRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_app/': {
@@ -146,18 +146,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppIndexRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/tts-test': {
-      id: '/_app/tts-test'
-      path: '/tts-test'
-      fullPath: '/tts-test'
-      preLoaderRoute: typeof AppTtsTestRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/progress': {
-      id: '/_app/progress'
-      path: '/progress'
-      fullPath: '/progress'
-      preLoaderRoute: typeof AppProgressRouteImport
+    '/_app/challenges': {
+      id: '/_app/challenges'
+      path: '/challenges'
+      fullPath: '/challenges'
+      preLoaderRoute: typeof AppChallengesRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/chats': {
@@ -167,11 +160,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppChatsRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/challenges': {
-      id: '/_app/challenges'
-      path: '/challenges'
-      fullPath: '/challenges'
-      preLoaderRoute: typeof AppChallengesRouteImport
+    '/_app/progress': {
+      id: '/_app/progress'
+      path: '/progress'
+      fullPath: '/progress'
+      preLoaderRoute: typeof AppProgressRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/tts-test': {
+      id: '/_app/tts-test'
+      path: '/tts-test'
+      fullPath: '/tts-test'
+      preLoaderRoute: typeof AppTtsTestRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/chat/$threadId': {
