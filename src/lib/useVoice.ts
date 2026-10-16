@@ -96,6 +96,18 @@ export async function speak(text: string, language: string) {
         data: { text: trimmed, voice: "hy-AM-AnahitNeural" },
       });
       if (!result.ok || !result.audio || !result.mime) {
+        // Azure unavailable: try ElevenLabs (multilingual) before OS voice,
+        // since most devices have no Armenian system voice.
+        try {
+          const { ttsSpeak } = await import("@/lib/tts.functions");
+          const el = await ttsSpeak({ data: { text: trimmed, voice: "George" } });
+          if (el.ok && el.audio && el.mime) {
+            const a = new Audio(`data:${el.mime};base64,${el.audio}`);
+            currentAudio = a;
+            await a.play();
+            return;
+          }
+        } catch { /* noop */ }
         fallbackBrowserSpeak(trimmed, "Armenian");
         return;
       }
