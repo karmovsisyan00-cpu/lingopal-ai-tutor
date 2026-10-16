@@ -147,6 +147,15 @@ function ChatPage() {
             className="flex-1 resize-none max-h-32 px-4 py-3 rounded-2xl bg-input border border-border focus:border-primary outline-none text-sm"
           />
           <button
+            onClick={() => input.trim() && speak(input.trim(), language)}
+            disabled={!input.trim()}
+            className="shrink-0 w-12 h-12 rounded-2xl bg-surface-elevated border border-border text-primary-glow grid place-items-center disabled:opacity-40"
+            aria-label={`Say this in ${language}`}
+            title={`Say this in ${language}`}
+          >
+            <Volume2 className="w-5 h-5" />
+          </button>
+          <button
             onClick={submit}
             disabled={!input.trim() || sendMut.isPending}
             className="shrink-0 w-12 h-12 rounded-2xl bg-gradient-primary text-primary-foreground grid place-items-center shadow-glow disabled:opacity-50"
