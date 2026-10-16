@@ -11,6 +11,30 @@ import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_app/")({
   component: HomePage,
+  head: () => ({
+    meta: [
+      {
+        title: "Lingua — AI Language Tutor for English, Russian, Armenian and more",
+      },
+      {
+        name: "description",
+        content:
+          "Practice English, Russian, Armenian and other languages with an AI tutor. Chat conversations, voice replies, grammar corrections, vocabulary suggestions, daily challenges and progress tracking.",
+      },
+      {
+        property: "og:title",
+        content: "Lingua — AI Language Tutor for English, Russian, Armenian and more",
+      },
+      {
+        property: "og:description",
+        content:
+          "Chat and speak with an AI tutor that corrects your grammar, suggests vocabulary and keeps you motivated with daily challenges.",
+      },
+      { property: "og:type", content: "website" },
+      { property: "og:url", content: "https://lingopal-ai-tutor.lovable.app/" },
+    ],
+    links: [{ rel: "canonical", href: "https://lingopal-ai-tutor.lovable.app/" }],
+  }),
 });
 
 function HomePage() {
